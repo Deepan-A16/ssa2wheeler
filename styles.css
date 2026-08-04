@@ -1,0 +1,130 @@
+/* Custom responsive & touch styles for Parking Management System */
+
+/* Touch highlight & smooth scrolling */
+* {
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+}
+
+html, body {
+  touch-action: manipulation;
+  overflow-x: hidden;
+}
+
+@layer utilities {
+  .fade-in {
+    animation: fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+  .animate-laser-scan {
+    animation: laserScan 1.5s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes laserScan {
+  from {
+    top: 5%;
+    opacity: 0.8;
+  }
+  to {
+    top: 95%;
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Hide number input spin buttons */
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}
+input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Custom Data Grid Table Row Highlights */
+#parking-grid-body tr:nth-child(even),
+#history-grid-body tr:nth-child(even) {
+  background-color: #f8fafc;
+}
+
+#parking-grid-body tr:hover,
+#history-grid-body tr:hover {
+  background-color: #e2e8f0;
+}
+
+/* Focus styles for Parking Entry Desk inputs */
+input:focus, select:focus {
+  border-color: #0284c7 !important;
+}
+
+/* Responsive Custom Scrollbar for Data Grids & Modals */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #e2e8f0;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Mobile, Tablet, Laptop & Desktop Responsive Styles */
+@media (max-width: 640px) {
+  body {
+    font-size: 13px;
+  }
+  
+  /* Form inputs & buttons touch targets */
+  input, select, button {
+    min-height: 38px;
+  }
+
+  /* Table responsive wrap */
+  .responsive-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Modals max height scroll */
+  #barcode-modal > div,
+  #exit-scan-modal > div,
+  #exit-checkout-modal > div,
+  #enquiry-modal > div {
+    max-height: 92vh;
+    overflow-y: auto;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  /* Tablet layout adjustments */
+  .tablet-scroll-grid {
+    overflow-y: auto;
+  }
+}
+
+@media (min-width: 1025px) {
+  /* Desktop & Laptop layout adjustments */
+  #dashboard-container {
+    height: 100vh;
+    max-height: 100vh;
+  }
+}
