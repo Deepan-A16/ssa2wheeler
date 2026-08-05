@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SSA Two-Wheeler Parking System</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['Courier New', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- FontAwesome Icons CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" type="image/png" href="logo.png">
+</head>
+
+<body class="bg-gray-100 text-gray-900 font-sans antialiased min-h-screen flex flex-col justify-between select-none">
+
+  <!-- Notification Toast Container (z-[99999] floats crystal clear on top of all modals) -->
+  <div id="toast-container"
+    class="fixed bottom-5 right-5 z-[99999] flex flex-col gap-3 max-w-sm w-full pointer-events-none"></div>
+
+  <!-- ================= LOGIN SCREEN CONTAINER ================= -->
+  <main id="login-container" class="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 gap-3">
+    
+    <!-- Official SSA Parking Logo Display (Cropped & Perfectly Centered Above Login Card) -->
+    <div class="w-full flex justify-center text-center">
+      <img src="logo.png" alt="SSA Parking Logo" class="h-36 sm:h-48 md:h-56 max-w-full mx-auto object-contain drop-shadow-md">
+    </div>
+
+    <!-- Login White Box Card -->
+    <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-gray-200 p-6 sm:p-8">
+      <div id="login-view" class="space-y-6">
+        <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4" autocomplete="off">
+          <!-- User Name Input -->
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500">
+              <i class="fa-solid fa-user text-sm"></i>
+            </div>
+            <input type="text" id="login-username" required placeholder="User Name" value="" autocomplete="off"
+              class="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-brand-600 focus:bg-white text-sm">
+          </div>
+
+          <!-- Password Input -->
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500">
+              <i class="fa-solid fa-lock text-sm"></i>
+            </div>
+            <input type="password" id="login-password" required placeholder="Password" value="" autocomplete="new-password"
+              class="w-full pl-11 pr-11 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-brand-600 focus:bg-white text-sm">
+            <button type="button" onclick="togglePasswordVisibility('login-password', 'toggle-pass-icon')"
+              class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600">
+              <i id="toggle-pass-icon" class="fa-solid fa-eye-slash text-sm"></i>
+            </button>
+          </div>
+
+
+
+          <div class="flex items-center justify-end text-xs">
+            <button type="button" onclick="openForgotPasswordModal()" class="text-brand-700 hover:text-brand-900 font-semibold hover:underline transition">
+              Forgot Password?
+            </button>
+          </div>
+
+          <div class="pt-2">
+            <button type="submit"
+              class="w-full py-3.5 px-4 bg-brand-900 hover:bg-brand-800 text-white font-bold rounded-xl shadow-md transition uppercase tracking-wider text-sm flex items-center justify-center gap-2">
+              <span>LOGIN</span>
+              <i class="fa-solid fa-arrow-right text-xs"></i>
+            </button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Forgot Password Modal -->
+  <div id="forgot-password-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs hidden z-[9999] flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-gray-100 relative animate-fadeIn">
+      <button type="button" onclick="closeForgotPasswordModal()" class="absolute top-5 right-5 text-gray-400 hover:text-gray-600 p-1">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+
+      <div class="text-center mb-6">
+        <div class="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-3 text-brand-600 text-2xl shadow-inner">
+          <i class="fa-solid fa-key"></i>
+        </div>
+        <h3 class="text-xl font-extrabold text-gray-900">Forgot Password?</h3>
+        <p class="text-xs text-gray-500 mt-1">Enter your registered email address to receive a secure password reset link.</p>
+      </div>
+
+      <form id="forgot-password-form" onsubmit="handleForgotPasswordSubmit(event)" class="space-y-4">
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+            <i class="fa-solid fa-envelope text-sm"></i>
+          </div>
+          <input type="email" id="forgot-email" required placeholder="Registered Email Address"
+            class="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-brand-600 focus:bg-white text-sm">
+        </div>
+
+        <button type="submit" id="forgot-submit-btn"
+          class="w-full py-3.5 px-4 bg-brand-900 hover:bg-brand-800 text-white font-bold rounded-xl shadow-md transition uppercase tracking-wider text-sm flex items-center justify-center gap-2">
+          <span>Send Reset Link</span>
+          <i class="fa-solid fa-paper-plane text-xs"></i>
+        </button>
+
+        <div class="text-center pt-2">
+          <button type="button" onclick="closeForgotPasswordModal()" class="text-xs text-gray-500 hover:text-gray-700 font-semibold">
+            <i class="fa-solid fa-arrow-left text-[10px] mr-1"></i> Back to Login
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= PARKING MANAGEMENT DESK DASHBOARD ================= -->
+  <div id="dashboard-container"
+    class="hidden min-h-screen lg:h-screen lg:max-h-screen flex-col overflow-y-auto lg:overflow-hidden bg-slate-200">
+
+    <!-- Top System Header Bar (Responsive for Mobile, Tablet, Laptop) -->
+    <header
+      class="shrink-0 bg-slate-300 border-b border-slate-400 px-3 sm:px-6 py-2 flex flex-wrap sm:flex-nowrap items-center justify-between shadow-sm gap-2">
+      <div class="flex items-center gap-2 sm:gap-4 relative">
+        <img src="logo.png" alt="SSA Parking Logo" class="h-9 sm:h-11 object-contain bg-white px-2 py-0.5 rounded-lg border border-slate-400/50 shadow-xs">
+        <h2 id="live-clock"
+          class="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 font-mono tracking-wider">09:47:58 PM
+        </h2>
+        <span
+          class="text-[10px] sm:text-xs font-semibold bg-brand-700 text-white px-2 py-0.5 sm:px-2.5 sm:py-1 rounded">SSA
+          PARKING SYSTEM</span>
+
+        <!-- Grey Info Button & Below Floating Popover -->
+        <div class="relative inline-block text-left z-30">
+          <button type="button" onclick="toggleEnquiryPopover(event)" title="Click for Enquiry Info"
+            class="w-5 h-5 rounded-full bg-slate-400 hover:bg-slate-500 active:scale-95 text-white font-bold flex items-center justify-center shadow-xs transition text-[9px] border border-slate-300">
+            <i class="fa-solid fa-info text-[9px]"></i>
+          </button>
+
+          <!-- Floating Dropdown Popover Directly Below Info Button -->
+          <div id="enquiry-popover"
+            class="hidden absolute left-0 top-full mt-2 w-72 bg-slate-800 text-white text-xs rounded-xl shadow-2xl border border-slate-700 p-3.5 z-[99999] space-y-2">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-1.5">
+              <span
+                class="font-extrabold text-slate-300 text-[11px] uppercase tracking-wider flex items-center gap-1.5">
+                <i class="fa-solid fa-headset text-sky-400"></i> Enquiry Contact
+              </span>
+              <button onclick="toggleEnquiryPopover(event)"
+                class="text-slate-400 hover:text-white text-xs font-bold">&times;</button>
+            </div>
+
+            <p class="text-[11px] text-slate-300">For enquiry contact:</p>
+
+            <!-- Blurred Contact Numbers Container (Reveals on Cursor Click) -->
+            <div id="blurred-enquiry-box" onclick="revealEnquiryNumbers()" title="Click cursor to unblur phone numbers"
+              class="cursor-pointer bg-slate-900/90 border border-slate-700 hover:border-sky-500 rounded-lg p-2.5 text-center transition-all duration-300">
+              <span id="enquiry-numbers-text"
+                class="font-mono text-sm font-extrabold text-sky-400 blur-sm transition-all duration-300 select-none tracking-wider block">
+                8825467213 , 8124600699
+              </span>
+              <span id="click-reveal-hint" class="text-[10px] font-bold text-amber-400 block mt-1.5 transition">
+                <i class="fa-solid fa-hand-pointer mr-1 animate-bounce"></i> Click cursor to unblur numbers
+              </span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3 sm:gap-6">
+        <div id="live-date" class="text-base sm:text-xl lg:text-2xl font-bold text-slate-900 font-mono">24-Jul-2026
+        </div>
+        <button onclick="handleLogout()"
+          class="px-2.5 py-1 bg-rose-600 text-white text-xs font-bold rounded hover:bg-rose-700 transition flex items-center gap-1">
+          <i class="fa-solid fa-power-off text-xs"></i> <span>Exit</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace Split Grid Layout (Responsive Grid: Stack on Mobile, Split on Tablet/Laptop) -->
+    <div class="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-12 gap-2 p-2 overflow-y-auto lg:overflow-hidden">
+
+      <!-- LEFT PANEL: ENTRY FORM (Responsive width) -->
+      <div
+        class="md:col-span-5 lg:col-span-4 min-h-0 bg-slate-100 border border-slate-300 rounded shadow-sm p-3 flex flex-col justify-between overflow-hidden h-full">
+
+        <!-- Form Container with smooth overflow scrolling if needed -->
+        <div class="flex-1 min-h-0 overflow-y-auto pr-1 pb-2">
+          <form id="parking-entry-form" onsubmit="triggerSaveBarcodeModal(event)" class="space-y-3">
+
+            <!-- Token No Row (Manually Editable or Auto-Generated) -->
+            <div class="grid grid-cols-3 items-center gap-2">
+              <label class="text-xs font-bold text-slate-700">Token No</label>
+              <div class="col-span-2">
+                <input type="text" inputmode="numeric" id="p-token-no" autocomplete="off"
+                  oninput="this.value = this.value.replace(/[^0-9]/g, '')" placeholder="000" value=""
+                  class="w-full px-3 py-1.5 bg-white border border-slate-400 font-mono text-xl font-bold text-slate-900 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-600 rounded-sm">
+              </div>
+            </div>
+
+            <!-- Type Select Row (Green Bar Removed + OTHER Custom Vehicle Name Input) -->
+            <div class="grid grid-cols-3 items-center gap-2">
+              <label class="text-xs font-bold text-slate-700">Type</label>
+              <div class="col-span-2 space-y-1">
+                <select id="p-veh-type" onchange="updateRateByVehicleType()"
+                  class="w-full px-2.5 py-1.5 bg-sky-600 text-white font-bold text-sm border border-slate-400 rounded-sm focus:outline-none">
+                  <option value="BIKE 15">BIKE 15</option>
+                  <option value="EV BIKE">EV BIKE</option>
+                  <option value="ROYAL">ROYAL</option>
+                  <option value="SCOOTER">SCOOTER</option>
+                  <option value="BULLET">BULLET</option>
+                  <option value="OTHER">+ OTHER (Add New)</option>
+                </select>
+
+                <!-- Custom Vehicle Type Input (Appears when OTHER is selected) -->
+                <div id="p-veh-type-other-container" class="hidden">
+                  <input type="text" id="p-veh-type-other" placeholder="Enter new vehicle type..." autocomplete="off"
+                    class="w-full px-2.5 py-1.5 bg-white border border-slate-400 text-xs font-bold uppercase text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-600 rounded-sm">
+                </div>
+              </div>
+            </div>
+
+            <!-- Vehicle No Input Row (Formula: TN 67 AD 2007 - Strictly Contained Grid) -->
+            <div class="grid grid-cols-3 items-center gap-2">
+              <label class="text-xs font-bold text-slate-700">Vehicle No</label>
+              <div class="col-span-2 grid grid-cols-4 gap-1">
+                <input type="text" id="p-veh-s1" value="TN" maxlength="2" placeholder="TN" autocomplete="off"
+                  oninput="autoTabVehicleInput(this, 'p-veh-s2', 2)"
+                  class="w-full px-1 py-1.5 bg-white border border-slate-400 text-center text-sm font-extrabold uppercase text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-600 rounded-sm">
+                <input type="text" id="p-veh-s2" maxlength="2" placeholder="67" autocomplete="off"
+                  oninput="autoTabVehicleInput(this, 'p-veh-s3', 2)"
+                  class="w-full px-1 py-1.5 bg-white border border-slate-400 text-center text-sm font-extrabold font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-600 rounded-sm">
+                <input type="text" id="p-veh-s3" maxlength="3" placeholder="AD" autocomplete="off"
+                  oninput="autoTabVehicleInput(this, 'p-veh-s4', 2)"
+                  class="w-full px-1 py-1.5 bg-white border border-slate-400 text-center text-sm font-extrabold uppercase text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-600 rounded-sm">
+                <input type="text" id="p-veh-s4" maxlength="4" placeholder="2007" autocomplete="off"
+                  class="w-full px-1 py-1.5 bg-white border border-slate-400 text-center text-sm font-extrabold font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-600 rounded-sm">
+              </div>
+            </div>
+
+            <!-- Name Input Row -->
+            <div class="grid grid-cols-3 items-center gap-2">
+              <label class="text-xs font-bold text-slate-700">Name</label>
+              <div class="col-span-2">
+                <input type="text" id="p-cust-name" placeholder="e.g. POOVARASAN" autocomplete="off"
+                  class="w-full px-3 py-1.5 bg-white border border-slate-400 text-sm font-bold uppercase text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-600 rounded-sm">
+              </div>
+            </div>
+
+            <!-- Mobile No Input Row (Exactly 10 Digits Only) -->
+            <div class="grid grid-cols-3 items-center gap-2">
+              <label class="text-xs font-bold text-slate-700">Mobile No</label>
+              <div class="col-span-2">
+                <input type="text" inputmode="numeric" id="p-mobile-no" maxlength="10" autocomplete="off"
+                  oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)" placeholder="10-digit Mobile No"
+                  class="w-full px-3 py-1.5 bg-white border border-slate-400 text-sm font-bold font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-600 rounded-sm">
+              </div>
+            </div>
+
+            <!-- Rate Input Row -->
+            <div class="grid grid-cols-3 items-center gap-2">
+              <label class="text-xs font-bold text-slate-700">Rate</label>
+              <div class="col-span-2">
+                <input type="number" id="p-rate" value="15" autocomplete="off"
+                  class="w-full px-3 py-1.5 bg-white border border-slate-400 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-600 rounded-sm">
+              </div>
+            </div>
+
+
+
+          </form>
+        </div>
+
+        <!-- Control Action Buttons Bar (Responsive Grid: 5 columns) -->
+        <div class="pt-3 border-t border-slate-300 grid grid-cols-5 gap-1 text-xs font-bold bg-slate-100 shrink-0">
+          <button type="button" onclick="document.getElementById('parking-entry-form').requestSubmit()"
+            class="py-2.5 px-1 bg-slate-300 hover:bg-emerald-600 hover:text-white border border-slate-400 text-slate-900 rounded-sm shadow-sm transition text-[11px] font-extrabold text-center">
+            Save - F2
+          </button>
+
+          <button type="button" onclick="triggerViewAction()"
+            class="py-2.5 px-1 bg-slate-300 hover:bg-sky-600 hover:text-white border border-slate-400 text-slate-900 rounded-sm shadow-sm transition text-[11px] font-extrabold text-center">
+            View - F5
+          </button>
+
+          <button type="button" onclick="resetParkingForm()"
+            class="py-2.5 px-1 bg-slate-300 hover:bg-amber-600 hover:text-white border border-slate-400 text-slate-900 rounded-sm shadow-sm transition text-[11px] font-extrabold text-center">
+            Clear - Esc
+          </button>
+
+          <button type="button" onclick="openExitScanModal()"
+            class="py-2.5 px-1 bg-rose-600 hover:bg-rose-700 text-white border border-rose-700 rounded-sm shadow-sm transition text-[11px] font-extrabold text-center">
+            Exit - F12
+          </button>
+
+          <button type="button" onclick="backupCurrentMonthToDrive()" id="btn-gdrive-backup-bar"
+            class="py-2.5 px-1 bg-blue-600 hover:bg-blue-700 text-white border border-blue-700 rounded-sm shadow-sm transition text-[11px] font-extrabold text-center flex items-center justify-center gap-1"
+            title="Email active vehicle records">
+            <i class="fa-solid fa-envelope"></i>
+            <span>Email</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- RIGHT PANEL: DATA GRID & BARCODE SEARCH BAR (Responsive span) -->
+      <div
+        class="md:col-span-7 lg:col-span-8 bg-white border border-slate-300 rounded shadow-sm overflow-hidden flex flex-col min-h-[350px]">
+
+        <!-- Search & Filter Header with Active vs Exit History Database Tabs -->
+        <div class="bg-slate-200 px-3 py-2 border-b border-slate-300 flex flex-wrap items-center justify-between gap-2">
+          <div class="relative flex-1 max-w-xs">
+            <i class="fa-solid fa-barcode absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+            <input type="text" id="grid-search-input" oninput="filterParkingGrid()"
+              onkeydown="if(event.key==='Enter'){ event.preventDefault(); triggerViewAction(); }"
+              placeholder="Scan Barcode / Search Token..."
+              class="w-full pl-8 pr-3 py-1 bg-white border border-slate-300 text-xs font-bold font-mono text-slate-800 rounded focus:outline-none focus:ring-2 focus:ring-sky-600">
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button type="button" id="tab-active-btn" onclick="switchGridMode('active')"
+              class="px-2.5 py-1 bg-brand-700 text-white font-bold text-xs rounded shadow-xs transition flex items-center gap-1 cursor-pointer">
+              <i class="fa-solid fa-motorcycle"></i>
+              <span>Active Vehicles</span>
+            </button>
+            <button type="button" id="tab-history-btn" onclick="switchGridMode('history')"
+              class="px-2.5 py-1 bg-slate-300 hover:bg-slate-400 text-slate-800 font-bold text-xs rounded transition flex items-center gap-1 cursor-pointer">
+              <i class="fa-solid fa-clock-rotate-left"></i>
+              <span>Exit History DB</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Data Grid Table -->
+        <div class="flex-1 overflow-auto">
+          <table class="w-full text-left text-xs font-mono border-collapse">
+            <thead class="bg-slate-200 text-slate-800 border-b border-slate-300 sticky top-0 font-bold text-[11px]">
+              <tr>
+                <th class="py-1.5 px-2 border-r border-slate-300 w-10 text-center">SNo</th>
+                <th class="py-1.5 px-2 border-r border-slate-300 w-14 text-center">TokenNo</th>
+                <th class="py-1.5 px-2 border-r border-slate-300 w-16">Veh</th>
+                <th class="py-1.5 px-2 border-r border-slate-300 w-28">vehNo</th>
+                <th class="py-1.5 px-2 border-r border-slate-300">CustName</th>
+                <th class="py-1.5 px-2 border-r border-slate-300 w-28">MobileNo</th>
+                <th class="py-1.5 px-2 border-r border-slate-300 w-20" id="grid-col-indate">InDate</th>
+                <th class="py-1.5 px-2 border-r border-slate-300 w-20" id="grid-col-time">entryTime</th>
+                <th class="py-1.5 px-2 border-r border-slate-300 w-20 text-center">No.of Days</th>
+                <th class="py-1.5 px-2 w-24 text-center">Amt</th>
+              </tr>
+            </thead>
+            <tbody id="parking-grid-body" class="divide-y divide-slate-200 text-slate-900 font-semibold text-[11px]">
+              <!-- Rows populated from SQLite -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ================= BARCODE SCAN MODAL (OPENED AFTER CLICKING SAVE) ================= -->
+  <!-- ================= CARD BARCODE SCAN MODAL (SAVE - F2) ================= -->
+  <div id="barcode-modal"
+    class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div
+      class="bg-white max-w-md w-full rounded-2xl shadow-2xl border border-slate-200 p-6 space-y-4 relative overflow-hidden">
+
+      <div class="text-center">
+        <div
+          class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl mb-3 relative overflow-hidden">
+          <i class="fa-solid fa-barcode"></i>
+          <!-- Animated Red Scanner Laser Line -->
+          <div class="absolute inset-x-0 h-0.5 bg-red-600 animate-laser-scan shadow-glow"></div>
+        </div>
+        <h3 class="text-xl font-extrabold text-slate-900">PLEASE SCAN CARD BARCODE NOW</h3>
+        <p class="text-xs text-slate-500 font-medium mt-1">Scan the customer's card barcode using your scanner to save
+          and link Token #<span id="modal-token-display" class="font-bold text-brand-700">500</span></p>
+      </div>
+
+      <!-- Vehicle Summary Box -->
+      <div
+        class="bg-slate-100 p-3 rounded-xl border border-slate-200 text-xs flex items-center justify-between font-bold text-slate-800">
+        <div>
+          <span class="text-slate-500 block text-[10px] uppercase">Vehicle No</span>
+          <span id="modal-veh-display" class="text-sm font-extrabold text-slate-900">TN 67 AD 2007</span>
+        </div>
+        <div class="text-right">
+          <span class="text-slate-500 block text-[10px] uppercase">Rate</span>
+          <span id="modal-rate-display" class="text-sm font-extrabold text-brand-700">₹15 (CASH)</span>
+        </div>
+      </div>
+
+      <!-- Scanned Barcode Input (Auto-Focused for USB Scanner) -->
+      <form onsubmit="confirmBarcodeScan(event)" class="space-y-3">
+        <div class="relative">
+          <input type="text" id="scan-barcode-input" required placeholder="Scan barcode and token number"
+            class="w-full py-3 pl-4 pr-20 bg-slate-50 border-2 border-emerald-500 rounded-xl text-center font-mono font-extrabold text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-4 focus:ring-emerald-200 uppercase tracking-wide">
+          <div class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-emerald-600 font-bold flex items-center gap-1 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200 pointer-events-none shadow-xs">
+            <i class="fa-solid fa-signal text-[10px] animate-pulse"></i>
+            <span>Ready</span>
+          </div>
+        </div>
+
+        <!-- Inline Barcode Mismatch Error Message Display -->
+        <div id="barcode-scan-error-msg"
+          class="hidden p-2.5 bg-rose-100 border border-rose-400 text-rose-800 rounded-lg text-xs font-bold text-center flex items-center justify-center gap-2">
+          <i class="fa-solid fa-circle-exclamation text-rose-600"></i>
+          <span id="barcode-scan-error-text">Enter the correct barcode number</span>
+        </div>
+
+        <div class="flex gap-2 pt-2">
+          <button type="submit"
+            class="flex-1 py-3 px-4 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl shadow transition text-xs uppercase tracking-wider flex items-center justify-center gap-2">
+            <i class="fa-solid fa-check-double"></i>
+            <span>Link Card & Save</span>
+          </button>
+
+          <button type="button" onclick="closeBarcodeModal()"
+            class="py-3 px-4 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition text-xs uppercase font-semibold">
+            Cancel (Esc)
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+
+  <!-- ================= VEHICLE EXIT BARCODE SCAN MODAL (EXIT - F12) ================= -->
+  <div id="exit-scan-modal"
+    class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div
+      class="bg-white max-w-md w-full rounded-2xl shadow-2xl border border-slate-200 p-6 space-y-4 relative overflow-hidden">
+
+      <div class="text-center">
+        <div
+          class="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto text-2xl mb-3 relative overflow-hidden">
+          <i class="fa-solid fa-right-from-bracket"></i>
+          <!-- Animated Red Scanner Laser Line -->
+          <div class="absolute inset-x-0 h-0.5 bg-red-600 animate-laser-scan shadow-glow"></div>
+        </div>
+        <h3 class="text-xl font-extrabold text-slate-900">SCAN CARD BARCODE TO EXIT (F12)</h3>
+        <p class="text-xs text-slate-500 font-medium mt-1">Scan the customer's card barcode or type Token No to retrieve
+          vehicle details for checkout.</p>
+      </div>
+
+      <!-- Scanned Exit Barcode Input (Auto-Focused for USB Scanner) -->
+      <form onsubmit="confirmExitBarcodeScan(event)" class="space-y-3">
+        <div class="relative">
+          <input type="text" id="scan-exit-barcode-input" required placeholder="Scan barcode and token number"
+            class="w-full py-3 pl-4 pr-20 bg-slate-50 border-2 border-rose-500 rounded-xl text-center font-mono font-extrabold text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-4 focus:ring-rose-200 uppercase tracking-wide">
+          <div class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-rose-600 font-bold flex items-center gap-1 bg-rose-50 px-2 py-1 rounded-md border border-rose-200 pointer-events-none shadow-xs">
+            <i class="fa-solid fa-signal text-[10px] animate-pulse"></i>
+            <span>Ready</span>
+          </div>
+        </div>
+
+        <!-- Inline Error Message Display inside Modal -->
+        <div id="exit-scan-error-msg"
+          class="hidden p-2.5 bg-rose-100 border border-rose-400 text-rose-800 rounded-lg text-xs font-bold text-center flex items-center justify-center gap-2">
+          <i class="fa-solid fa-circle-exclamation text-rose-600"></i>
+          <span id="exit-scan-error-text">No active vehicle found matching this Token No / Card.</span>
+        </div>
+
+        <div class="flex gap-2 pt-2">
+          <button type="submit"
+            class="flex-1 py-3 px-4 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow transition text-xs uppercase tracking-wider flex items-center justify-center gap-2">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span>Fetch Vehicle & Exit</span>
+          </button>
+
+          <button type="button" onclick="closeExitScanModal()"
+            class="py-3 px-4 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition text-xs uppercase">
+            Cancel (Esc)
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+
+  <!-- ================= VEHICLE EXIT BILL & CHECKOUT MODAL (MATCHING REFERENCE UI) ================= -->
+  <div id="exit-checkout-modal"
+    class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-100 max-w-2xl w-full rounded-lg shadow-2xl border border-slate-400 overflow-hidden">
+
+      <!-- Top Title Bar -->
+      <div class="bg-slate-800 text-white px-4 py-3 flex items-center justify-between">
+        <h3 class="text-base font-extrabold flex items-center gap-2">
+          <i class="fa-solid fa-file-invoice text-emerald-400"></i>
+          <span>VEHICLE EXIT BILL - TOKEN #<span id="exit-token-title">512</span></span>
+        </h3>
+        <button onclick="closeExitCheckoutModal()"
+          class="text-slate-400 hover:text-white text-lg font-bold">&times;</button>
+      </div>
+
+      <!-- Checkout Details Grid -->
+      <div class="p-3 sm:p-4 space-y-3 sm:space-y-4 max-h-[85vh] overflow-y-auto">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <!-- Left Column: Vehicle Entry Info -->
+          <div class="bg-white p-3 border border-slate-300 rounded shadow-sm space-y-2 text-xs">
+            <div class="flex justify-between border-b pb-1">
+              <span class="font-bold text-slate-500">Token No</span>
+              <span id="exit-token-no" class="font-extrabold text-slate-900 text-sm">512</span>
+            </div>
+            <div class="flex justify-between border-b pb-1">
+              <span class="font-bold text-slate-500">Type</span>
+              <span id="exit-veh-type" class="font-extrabold text-sky-700">BIKE 15</span>
+            </div>
+            <div class="flex justify-between border-b pb-1">
+              <span class="font-bold text-slate-500">Vehicle No</span>
+              <span id="exit-veh-no" class="font-extrabold text-slate-900 text-sm font-mono">TN23 3094</span>
+            </div>
+            <div class="flex justify-between border-b pb-1">
+              <span class="font-bold text-slate-500">Customer Name</span>
+              <span id="exit-cust-name" class="font-bold text-slate-800">-</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="font-bold text-slate-500">Mobile No</span>
+              <span id="exit-mobile-no" class="font-bold text-slate-800">-</span>
+            </div>
+          </div>
+
+          <!-- Right Column: Billing & Hours -->
+          <div class="bg-white p-3 border border-slate-300 rounded shadow-sm space-y-2 text-xs">
+            <div class="flex justify-between border-b pb-1">
+              <span class="font-bold text-slate-500">Date</span>
+              <span id="exit-in-date" class="font-bold text-slate-900">25/07/2026</span>
+            </div>
+            <div class="flex justify-between border-b pb-1">
+              <span class="font-bold text-slate-500">Entry Time</span>
+              <span id="exit-entry-time" class="font-bold text-slate-900">9:30 AM</span>
+            </div>
+            <div class="flex justify-between border-b pb-1">
+              <span class="font-bold text-slate-500">Hours Parked</span>
+              <span id="exit-hours" class="font-extrabold text-amber-600">2 Hours</span>
+            </div>
+            <div class="flex justify-between border-b pb-1">
+              <span class="font-bold text-slate-500">Rate / 12 Hours</span>
+              <span id="exit-rate" class="font-bold text-slate-900">₹15.00</span>
+            </div>
+            <div class="flex justify-between items-center border-b pb-1 text-rose-700 font-bold">
+              <span class="flex items-center gap-1">
+                <i class="fa-solid fa-triangle-exclamation text-rose-500 text-[10px]"></i>
+                <span>Fine / Penalty (₹)</span>
+              </span>
+              <div class="flex items-center gap-1 bg-rose-50 px-2 py-0.5 border border-rose-300 rounded">
+                <span class="text-xs font-bold text-rose-700">₹</span>
+                <input type="number" id="exit-fine-amount" oninput="updateExitFineAndTotal()" step="1" min="0" value="0" placeholder="0"
+                  class="w-16 bg-transparent text-right font-extrabold text-rose-700 text-xs focus:outline-none">
+              </div>
+            </div>
+            <div class="flex justify-between items-center text-emerald-700 font-extrabold text-sm pt-1">
+              <span>Total Bill (₹)</span>
+              <div class="flex items-center gap-1 bg-emerald-50 px-2 py-0.5 border border-emerald-300 rounded">
+                <span>₹</span>
+                <input type="number" id="exit-total-amount" oninput="syncExitPayableAmount('detail')" step="1" min="0"
+                  class="w-20 bg-transparent text-right font-extrabold text-emerald-800 text-sm focus:outline-none">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Big Green Payment Confirmation Banner with Editable Payable Amount -->
+        <div class="bg-emerald-700 text-white p-3.5 rounded-lg shadow-md flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6">
+          <div>
+            <span class="text-[11px] font-bold text-emerald-200 uppercase block mb-1 flex items-center gap-1">
+              <i class="fa-solid fa-pen-to-square text-amber-300"></i>
+              <span>Total Amount Payable (Editable ₹)</span>
+            </span>
+            <div class="flex items-center gap-1.5 bg-emerald-950/40 border border-emerald-400/40 rounded-lg px-3 py-1">
+              <span class="text-2xl font-black text-amber-300 font-mono">₹</span>
+              <input type="number" id="exit-editable-amount" oninput="syncExitPayableAmount('banner')" step="1" min="0"
+                class="w-36 bg-transparent text-2xl font-black font-mono text-white focus:outline-none">
+            </div>
+          </div>
+          <div class="flex items-center gap-3 text-xs font-bold">
+            <label class="flex items-center gap-1.5 cursor-pointer bg-emerald-800 hover:bg-emerald-900 px-3.5 py-2 rounded-lg border border-emerald-600 transition">
+              <input type="radio" name="exit_payment_mode" value="CASH" checked class="w-4 h-4 text-brand-700">
+              <span>CASH</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer bg-emerald-800 hover:bg-emerald-900 px-3.5 py-2 rounded-lg border border-emerald-600 transition">
+              <input type="radio" name="exit_payment_mode" value="GPAY" class="w-4 h-4 text-brand-700">
+              <span>GPAY</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Action Bar (Save F2) -->
+        <div class="flex justify-end gap-2 pt-2 border-t border-slate-300">
+          <button type="button" onclick="completeVehicleExitCheckout()"
+            class="py-2.5 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded text-xs shadow uppercase flex items-center gap-2">
+            <i class="fa-solid fa-check"></i>
+            <span>Save F2 - Complete Exit</span>
+          </button>
+
+          <button type="button" onclick="closeExitCheckoutModal()"
+            class="py-2.5 px-4 bg-slate-300 hover:bg-slate-400 text-slate-800 font-bold rounded text-xs uppercase">
+            Cancel (Esc)
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+
+
+    <!-- ================= ENQUIRY CONTACT INFO MODAL ================= -->
+    <div id="enquiry-modal"
+      class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[99999] hidden flex items-center justify-center p-4">
+      <div
+        class="bg-white max-w-sm w-full rounded-2xl shadow-2xl border border-slate-200 p-6 text-center space-y-4 relative overflow-hidden">
+
+        <div
+          class="w-16 h-16 bg-sky-100 text-sky-600 rounded-full flex items-center justify-center mx-auto text-3xl shadow-inner">
+          <i class="fa-solid fa-headset"></i>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-extrabold text-slate-900 uppercase">ENQUIRY CONTACT</h3>
+          <p class="text-xs text-slate-500 font-medium mt-1">For any queries or support, please contact:</p>
+        </div>
+
+        <div class="bg-sky-50 border border-sky-200 rounded-xl p-4 space-y-2">
+          <span class="text-xs font-bold text-sky-900 block uppercase tracking-wider">Contact Numbers</span>
+          <div class="flex flex-col gap-2 font-mono text-base font-extrabold text-sky-700">
+            <a href="tel:8825467213"
+              class="hover:underline flex items-center justify-center gap-2 bg-white py-2 px-3 rounded-lg border border-sky-200 shadow-sm">
+              <i class="fa-solid fa-phone text-xs"></i> <span>8825467213</span>
+            </a>
+            <a href="tel:8124600699"
+              class="hover:underline flex items-center justify-center gap-2 bg-white py-2 px-3 rounded-lg border border-sky-200 shadow-sm">
+              <i class="fa-solid fa-phone text-xs"></i> <span>8124600699</span>
+            </a>
+          </div>
+        </div>
+
+        <button type="button" onclick="closeEnquiryModal()"
+          class="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs uppercase shadow transition">
+          Close
+        </button>
+
+      </div>
+    </div>
+
+    <!-- ================= MONTHLY EXIT HISTORY MODAL (CSV BACKUP & MONTHLY CLEANUP) ================= -->
+    <div id="history-modal"
+      class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 sm:p-4">
+      <div
+        class="bg-slate-100 max-w-5xl w-full max-h-[92vh] rounded-2xl shadow-2xl border border-slate-400 flex flex-col overflow-hidden">
+
+        <!-- Modal Header -->
+        <div class="bg-slate-800 text-white p-3.5 px-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-700 shrink-0">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-brand-700 text-white flex items-center justify-center text-lg font-bold shadow-sm">
+              <i class="fa-solid fa-clock-rotate-left"></i>
+            </div>
+            <div>
+              <h3 class="text-base sm:text-lg font-extrabold flex items-center gap-2 text-white">
+                <span>MONTHLY VEHICLE PARKING EXIT HISTORY</span>
+              </h3>
+            </div>
+          </div>
+
+          <button type="button" onclick="closeExitHistoryModal()"
+            class="w-8 h-8 rounded-lg bg-slate-700 hover:bg-rose-600 text-slate-300 hover:text-white font-bold flex items-center justify-center transition text-sm">
+            &times;
+          </button>
+        </div>
+
+        <!-- Top Summary Metrics & Search/Month Control Bar -->
+        <div class="bg-slate-200 p-3.5 border-b border-slate-300 grid grid-cols-1 md:grid-cols-12 gap-3 items-center shrink-0">
+          
+          <!-- Month Dropdown Selector -->
+          <div class="md:col-span-3">
+            <div class="relative">
+              <i class="fa-solid fa-calendar-days absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+              <select id="history-month-select" onchange="onHistoryMonthChange()"
+                class="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-300 text-xs font-bold font-mono text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-600 shadow-xs cursor-pointer">
+                <option value="">Loading Months...</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Search Bar Input -->
+          <div class="md:col-span-4 relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+            <input type="text" id="history-search-input" oninput="filterExitHistory()"
+              placeholder="Search Token, Vehicle No, Name, Mobile or Barcode..."
+              class="w-full pl-9 pr-3 py-1.5 bg-white border border-slate-300 text-xs font-bold font-mono text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-600 shadow-xs">
+          </div>
+
+          <!-- Summary Metric Cards -->
+          <div class="md:col-span-5 grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+            <div class="bg-white border border-slate-300 rounded-lg px-2 py-1 text-center shadow-xs">
+              <span class="text-[8px] font-extrabold text-slate-500 uppercase block">Total Exits</span>
+              <span id="history-count-badge" class="text-xs font-black text-slate-900 font-mono">0 Records</span>
+            </div>
+
+            <div class="bg-emerald-50 border border-emerald-200 rounded-lg px-2 py-1 text-center shadow-xs">
+              <span class="text-[8px] font-extrabold text-emerald-700 uppercase block">Revenue</span>
+              <span id="history-total-revenue" class="text-xs font-black text-emerald-800 font-mono">₹0</span>
+            </div>
+
+            <div class="bg-sky-50 border border-sky-200 rounded-lg px-2 py-1 text-center shadow-xs">
+              <span class="text-[8px] font-extrabold text-sky-700 uppercase block">CASH</span>
+              <span id="history-cash-revenue" class="text-xs font-black text-sky-800 font-mono">₹0</span>
+            </div>
+
+            <div class="bg-purple-50 border border-purple-200 rounded-lg px-2 py-1 text-center shadow-xs">
+              <span class="text-[8px] font-extrabold text-purple-700 uppercase block">GPAY</span>
+              <span id="history-gpay-revenue" class="text-xs font-black text-purple-800 font-mono">₹0</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Data Table Body (Scrollable) -->
+        <div class="flex-1 overflow-auto bg-white">
+          <table class="w-full text-left text-xs font-mono border-collapse">
+            <thead class="bg-slate-200 text-slate-800 border-b border-slate-300 sticky top-0 font-bold text-[11px] z-10">
+              <tr>
+                <th class="py-2 px-2.5 border-r border-slate-300 w-10 text-center">SNo</th>
+                <th class="py-2 px-2.5 border-r border-slate-300 w-16 text-center">Token</th>
+                <th class="py-2 px-2.5 border-r border-slate-300 w-28 text-center">Barcode Card</th>
+                <th class="py-2 px-2.5 border-r border-slate-300 w-20">Veh Type</th>
+                <th class="py-2 px-2.5 border-r border-slate-300 w-28">Veh No</th>
+                <th class="py-2 px-2.5 border-r border-slate-300">Customer Name</th>
+                <th class="py-2 px-2.5 border-r border-slate-300 w-28">Mobile No</th>
+                <th class="py-2 px-2.5 border-r border-slate-300 w-36">Entry (Date &amp; Time)</th>
+                <th class="py-2 px-2.5 border-r border-slate-300 w-36">Exit Vehicle (Date &amp; Time)</th>
+                <th class="py-2 px-2.5 border-r border-slate-300 w-20 text-right">Amount</th>
+                <th class="py-2 px-2.5 w-20 text-center">Payment</th>
+              </tr>
+            </thead>
+            <tbody id="history-grid-body" class="divide-y divide-slate-200 text-slate-900 font-semibold text-[11px]">
+              <!-- Rows populated dynamically from exit_history table -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Modal Footer Bar -->
+        <div class="bg-slate-200 p-3 border-t border-slate-300 flex flex-wrap items-center justify-end gap-2 shrink-0">
+          <div class="flex items-center gap-2 flex-wrap">
+
+            <button type="button" onclick="downloadExitHistoryCSV()"
+              class="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-extrabold rounded-lg transition flex items-center gap-1.5 shadow-sm">
+              <i class="fa-solid fa-file-excel"></i>
+              <span>Download CSV</span>
+            </button>
+
+            <button type="button" onclick="printExitHistory()"
+              class="px-3 py-2 bg-slate-700 hover:bg-slate-800 text-white text-xs font-extrabold rounded-lg transition flex items-center gap-1.5 shadow-sm">
+              <i class="fa-solid fa-print"></i>
+              <span>Print</span>
+            </button>
+
+            <button type="button" onclick="closeExitHistoryModal()"
+              class="px-3.5 py-2 bg-slate-300 hover:bg-slate-400 text-slate-800 text-xs font-bold rounded-lg transition">
+              Close (Esc)
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer id="main-footer"
+      class="py-2 bg-slate-300 text-center text-xs text-slate-700 font-bold border-t border-slate-400">
+      <p>Powered by <span class="text-slate-900 uppercase tracking-wider">BNEEDS</span></p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
