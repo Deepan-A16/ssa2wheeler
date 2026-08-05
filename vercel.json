@@ -1,0 +1,27 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "server.js",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["index.html", "app.js", "styles.css", "logo.png"]
+      }
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/parking/archive/run",
+      "schedule": "0 0 1 * *"
+    }
+  ],
+  "routes": [
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "server.js"
+    }
+  ]
+}
